@@ -12,7 +12,8 @@ echo llvm_install_dir=$llvm_install_dir
 py_venv_path=/opt/apps/py3-triton-shared/bin/activate
 
 # triton path
-triton_src_dir=${current_dir}/../triton
+triton_shared_src_dir=${current_dir}/..
+triton_src_dir=${triton_shared_src_dir}/triton
 triton_build_dir=${current_dir}/build
 triton_install_dir=${HOME}/.local/triton-$TRITON_MAJ_VER-$TARGET_ARCH
 triton_dir=${triton_install_dir}/lib/cmake/triton
@@ -45,7 +46,11 @@ function build_triton(){
     source $py_venv_path
     # pip install ninja cmake wheel pybind11 # build-time dependencies
     # 设置Degun模式
-    export DEBUG=1
+    http_proxy=http://sys-proxy-rd-relay.byted.org:3128 \
+    https_proxy=http://sys-proxy-rd-relay.byted.org:3128 \
+    no_proxy=.byted.org \
+    DEBUG=1 \
+    TRITON_PLUGIN_DIRS=${triton_shared_src_dir} \
     LLVM_INCLUDE_DIRS=${llvm_install_dir}/include \
     LLVM_LIBRARY_DIR=${llvm_install_dir}/lib \
     LLVM_SYSPATH=${llvm_install_dir} \
