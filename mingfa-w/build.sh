@@ -3,20 +3,24 @@ export rebuild=0 # 1-重新编译
 TARGET_ARCH=`uname -m`
 TRITON_MAJ_VER=31040564
 
+# 下面参数要与utils/docker/Dockerfile中保持一致
+APPS_PATH=/opt/apps
+CODE_PATH=${APPS_PATH}/code
+VENV_PATH=${APPS_PATH}/venv
+
 # llvm-project version
 LLVM_MAJ_VER=triton-31040564-llvm-c08c6a71
 # llvm_install_dir=${HOME}/.local/llvm-$LLVM_MAJ_VER-$TARGET_ARCH
-llvm_install_dir=/opt/llvm_${LLVM_MAJ_VER}
+llvm_install_dir=${APPS_PATH}/llvm_${LLVM_MAJ_VER}
 echo llvm_install_dir=$llvm_install_dir
 # python venv
-py_venv_path=/opt/apps/py3-triton-shared/bin/activate
+py_venv_dir=${VENV_PATH}/triton-shared
 
 # triton path
-triton_shared_src_dir=${current_dir}/..
-triton_src_dir=${triton_shared_src_dir}/triton
-triton_build_dir=${current_dir}/build
-triton_install_dir=${HOME}/.local/triton-$TRITON_MAJ_VER-$TARGET_ARCH
-triton_dir=${triton_install_dir}/lib/cmake/triton
+src_dir=${current_dir}/..
+triton_src_dir=${src_dir}/triton
+triton_build_dir=${triton_src_dir}/python/build
+triton_install_dir=${triton_build_dir}/
 
 # 处理参数
 while getopts "rp:" opt
@@ -38,19 +42,17 @@ do
 done
 
 function build_triton(){
-    if [ ! -d ${triton_src_dir/python/build} ]; then
-        rm -rf ${triton_src_dir/python/build}
+    if [ rebuild == 1 ] && [ ! -d ${triton_build_dir} ]; then
+        rm -rf ${triton_build_dir}
     fi
     cd ${triton_src_dir}
-    # source $HOME/apps/venv/python3112-triton/bin/activate
-    source $py_venv_path
-    # pip install ninja cmake wheel pybind11 # build-time dependencies
-    # 设置Degun模式
+    source $py_venv_dir/bin/activate
+
     http_proxy=http://sys-proxy-rd-relay.byted.org:3128 \
     https_proxy=http://sys-proxy-rd-relay.byted.org:3128 \
     no_proxy=.byted.org \
     DEBUG=1 \
-    TRITON_PLUGIN_DIRS=${triton_shared_src_dir} \
+    TRITON_PLUGIN_DIRS=${src_dir} \
     LLVM_INCLUDE_DIRS=${llvm_install_dir}/include \
     LLVM_LIBRARY_DIR=${llvm_install_dir}/lib \
     LLVM_SYSPATH=${llvm_install_dir} \
